@@ -92,7 +92,7 @@ func walk(path string, info os.FileInfo, err error) error {
 	}
 	buf, err = format.Source([]byte(generate(string(buf))))
 	if err != nil {
-		return errors.New(fmt.Sprintf("Format error:", path, err))
+		return fmt.Errorf("Format error: %v %v", path, err))
 	}
 	// 将文件后缀变为.go
 	outPath := path[:len(path)-len(suffix)] + "go"
