@@ -98,11 +98,11 @@ func Index() string {
 	return _buffer.String()
 }
 
-func test1(_buffer bytes.Buffer) {
+func test1(_buffer *bytes.Buffer) {
 	_buffer.WriteString("<a>test1</a>")
 }
 
-func test2(_buffer bytes.Buffer, t string) {
+func test2(_buffer *bytes.Buffer, t string) {
 	_buffer.WriteString("<a>test")
 	_buffer.WriteString(t)
 	_buffer.WriteString("</a>")
