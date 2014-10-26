@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"go/format"
 	"log"
@@ -9,105 +10,64 @@ import (
 	"strings"
 )
 
-func main() {
-	t := `package tpl
-
-import (
-	"fmt"
-	"bytes"
+var (
+	delimiterLeft  = *flag.String("dl", "{{", "Left delimiter")
+	delimiterRight = *flag.String("dr", "}}", "Right delimiter")
 )
 
-func Index() string {
-	_buffer := new(bytes.Buffer)
+func main() {
+	flag.Parse()
+	if len(flag.Args()) == 0 {
+		fmt.Println(`
+ ██████╗         ██╗  ██╗████████╗███╗   ███╗██╗
+██╔════╝  █████╗ ██║  ██║╚══██╔══╝████╗ ████║██║
+██║  ███╗██╔══██╗███████║   ██║   ██╔████╔██║██║
+██║   ██║██║  ██║██╔══██║   ██║   ██║╚██╔╝██║██║
+╚██████╔╝╚█████╔╝██║  ██║   ██║   ██║ ╚═╝ ██║███████╗
+ ╚═════╝  ╚════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚══════╝
+=====================================================
+GoHTML使用帮助:
+===============
 
-	<a>Text</a>
+命令结构:
+  命令 [参数] <模板文件夹路径>
 
-	for i:=0; i<10; i++ {
-		<a>{{string(i)}}</a>
+参数：
+  -dl <字符串>       左分隔符样式
+  -dr <字符串>       右分隔符样式
+
+举例：
+  gohtml -dl <{ -dr }> /home/bluek404/gocode/web/_view
+   |则会将
+   |/home/bluek404/gocode/web/_view
+   |里面所有gohtml文件转换为go文件后放到
+   |/home/bluek404/gocode/web/view
+   |文件夹中
+   |并设置左分隔符为“<{” ，右分割符为“}>”
+
+备注：
+  方括号[]为选填项目，尖括号<>为必填项目
+  未转换的模板文件夹必须以“_”开头，并且文件以“.gohtml”结尾（都没有双引号）`)
+		return
 	}
-
-	var t string = "2"
-	fmt.Println(t)
-
-	print:=func() {
-		<a>text</a>
-	}
-	print()
-
-	test1(_buffer)
-	test2(_buffer, t)
-
-	return _buffer.String()
-}
-
-func test1(_buffer bytes.Buffer) {
-	<a>test1</a>
-}
-
-func test2(_buffer bytes.Buffer, t string) {
-	<a>test{{t}}</a>
-}`
-	buf, err := format.Source([]byte(generate(t)))
+	fmt.Println(flag.Args()[0])
+	src := ``
+	buf, err := format.Source([]byte(generate(src)))
 	if err != nil {
 		log.Println("Format error:", err)
 		return
 	}
 	fmt.Println(string(buf))
-	/*
-		package tpl
-
-		import (
-			"fmt"
-			"bytes"
-		)
-
-		func Index() string {
-			_buffer := new(bytes.Buffer)
-
-			_buffer.WriteString("<a>Text</a>")
-
-			for i:=0; i<10; i++ {
-				_buffer.WriteString("<a>")
-				_buffer.WriteString(string(i))
-				_buffer.WriteString("</a>")
-			}
-
-			var t string = "2"
-			fmt.Println(t)
-
-			print:=func() {
-				_buffer.WriteString("<a>text</a>")
-			}
-			print()
-
-			test1(_buffer)
-			test2(_buffer,t)
-
-			return _buffer.String()
-		}
-
-		func test1(_buffer bytes.Buffer) {
-			_buffer.WriteString("<a>test1</a>")
-		}
-
-		func test2(_buffer bytes.Buffer, t string) {
-			_buffer.WriteString("<a>test")
-			_buffer.WriteString(t)
-			_buffer.WriteString("</a>")
-		}
-	*/
 }
 
 func generate(in string) string {
 	var _buffer bytes.Buffer
 
 	isHTML := regexp.MustCompile(`^\s*<.*>\s*$`)
-	symbolLeft := "{{"
-	symbolRight := "}}"
-	symbolLeftLen := len(symbolLeft)
-	symbolRightLen := len(symbolRight)
+	delimiterLeftLen := len(delimiterLeft)
+	delimiterRightLen := len(delimiterRight)
 	// 分隔符
-	symbol := regexp.MustCompile(symbolLeft + ".*" + symbolRight)
+	delimiter := regexp.MustCompile(delimiterLeft + ".*" + delimiterRight)
 
 	a := regexp.MustCompile(`^\s*`)
 	z := regexp.MustCompile(`\s*$`)
@@ -127,13 +87,13 @@ func generate(in string) string {
 			// 转义双引号
 			buf = strings.Replace(buf, `"`, `\"`, -1)
 			// 检查是否有分隔符需要替换
-			if symbol.MatchString(buf) {
+			if delimiter.MatchString(buf) {
 				// 替换分隔符
 				// 找到本行全部分隔符
-				symbolBUF := symbol.FindAllString(buf, -1)
-				for _, v := range symbolBUF {
+				delimiterBUF := delimiter.FindAllString(buf, -1)
+				for _, v := range delimiterBUF {
 					// 去掉两边分隔符
-					vBUF := v[symbolLeftLen : len(v)-symbolRightLen]
+					vBUF := v[delimiterLeftLen : len(v)-delimiterRightLen]
 					// 组合插入
 					vBUF = "\")\n_buffer.WriteString(" + vBUF + ")\n_buffer.WriteString(\""
 					// 替换
