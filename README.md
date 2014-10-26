@@ -146,3 +146,7 @@ GoHTML使用帮助:
   方括号[]为选填项目，尖括号<>为必填项目
 ```
 
+下载
+----
+
+[![Gobuild Download](http://gobuild.io/badge/github.com/Bluek404/GoHTML/downloads.svg)](http://gobuild.io/github.com/Bluek404/GoHTML)
