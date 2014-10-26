@@ -3,7 +3,8 @@ package main
 import (
 	"bytes"
 	"fmt"
-	//"log"
+	"go/format"
+	"log"
 	"regexp"
 	"strings"
 )
@@ -27,7 +28,6 @@ func Index() string {
 
 	var t string = "2"
 	fmt.Println(t)
-	{{t}}
 
 	print:=func() {
 		<a>text</a>
@@ -47,7 +47,12 @@ func test1(_buffer bytes.Buffer) {
 func test2(_buffer bytes.Buffer, t string) {
 	<a>test{{t}}</a>
 }`
-	fmt.Println(generate(t))
+	buf, err := format.Source([]byte(generate(t)))
+	if err != nil {
+		log.Println("Format error:", err)
+		return
+	}
+	fmt.Println(string(buf))
 	/*
 		package tpl
 
@@ -69,7 +74,6 @@ func test2(_buffer bytes.Buffer, t string) {
 
 			var t string = "2"
 			fmt.Println(t)
-			_buffer.WriteString(t)
 
 			print:=func() {
 				_buffer.WriteString("<a>text</a>")
@@ -85,7 +89,7 @@ func test2(_buffer bytes.Buffer, t string) {
 		func test1(_buffer bytes.Buffer) {
 			_buffer.WriteString("<a>test1</a>")
 		}
-	
+
 		func test2(_buffer bytes.Buffer, t string) {
 			_buffer.WriteString("<a>test")
 			_buffer.WriteString(t)
@@ -94,11 +98,10 @@ func test2(_buffer bytes.Buffer, t string) {
 	*/
 }
 
-func generate(in string) (string, error) {
+func generate(in string) string {
 	var _buffer bytes.Buffer
 
 	isHTML := regexp.MustCompile(`^\s*<.*>\s*$`)
-	space := regexp.MustCompile(`^\s*$`)
 	symbolLeft := "{{"
 	symbolRight := "}}"
 	symbolLeftLen := len(symbolLeft)
@@ -113,17 +116,19 @@ func generate(in string) (string, error) {
 
 	r := new(readLine)
 	for {
+		// 按行读取处理
 		buf, ok := r.read(in)
 
-		switch {
-		case isHTML.MatchString(buf):
+		// 检查本行是否为HTML
+		if isHTML.MatchString(buf) {
 			// 去首尾空
 			buf = a.ReplaceAllLiteralString(buf, "")
 			buf = z.ReplaceAllLiteralString(buf, "")
 			// 转义双引号
 			buf = strings.Replace(buf, `"`, `\"`, -1)
-			// 替换分隔符
+			// 检查是否有分隔符需要替换
 			if symbol.MatchString(buf) {
+				// 替换分隔符
 				// 找到本行全部分隔符
 				symbolBUF := symbol.FindAllString(buf, -1)
 				for _, v := range symbolBUF {
@@ -133,10 +138,8 @@ func generate(in string) (string, error) {
 					vBUF = "\")\n_buffer.WriteString(" + vBUF + ")\n_buffer.WriteString(\""
 					// 替换
 					buf = strings.Replace(buf, v, vBUF, -1)
-					fmt.Println(v)
 				}
 			}
-
 			// 将本行添加到缓存中，输出为一行
 			// 就是将两行
 			// _buffer.WriteString('<a>xxx</a>')
@@ -144,9 +147,8 @@ func generate(in string) (string, error) {
 			// 简化为一行
 			// _buffer.WriteString('<a>xxx</a><a>xxx</a>')
 			htmlBUF += buf
-		case space.MatchString(buf):
-			// 空行，跳过
-		default:
+		} else {
+			// 本行为Golang
 			// 检查是否有html需要输出
 			if htmlBUF != "" {
 				// 输出html
@@ -156,15 +158,16 @@ func generate(in string) (string, error) {
 			}
 			_buffer.WriteString(buf + "\n")
 		}
-
+		// 检查是否已经读取完毕
 		if ok {
 			break
 		}
 	}
-	return _buffer.String(), nil
+	return _buffer.String()
 }
 
 type readLine struct {
+	// 用于记录每行的起始位置
 	start int
 	end   int
 }
@@ -181,9 +184,12 @@ func (r *readLine) read(str string) (string, bool) {
 		r.end = 0
 		return line, true
 	}
+	// 行的结束位置
 	r.end = r.start + n
+	// 提取一行
 	line := string(str[r.start:r.end])
-	r.start = r.end + 1 // 跳过换行符,下次循环时从换行符后开始
+	// 下一行的开始位置
+	r.start = r.end + 1
 
 	return line, false
 }
