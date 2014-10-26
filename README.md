@@ -54,11 +54,11 @@ func Index() string {
 	return _buffer.String()
 }
 
-func test1(_buffer bytes.Buffer) {
+func test1(_buffer *bytes.Buffer) {
 	<a>test1</a>
 }
 
-func test2(_buffer bytes.Buffer, t string) {
+func test2(_buffer *bytes.Buffer, t string) {
 	<a>test{{t}}</a>
 }
 ```
