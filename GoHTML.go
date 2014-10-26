@@ -2,10 +2,14 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"go/format"
+	"io/ioutil"
 	"log"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -13,11 +17,13 @@ import (
 var (
 	delimiterLeft  = *flag.String("dl", "{{", "Left delimiter")
 	delimiterRight = *flag.String("dr", "}}", "Right delimiter")
+	suffix         = *flag.String("suffix", "gohtml", "The GoHTML templates file suffix")
 )
 
 func main() {
 	flag.Parse()
-	if len(flag.Args()) == 0 {
+	// 如果命令行参数为空，那么输出帮助
+	if flag.Arg(0) == "" {
 		fmt.Println(`
  ██████╗         ██╗  ██╗████████╗███╗   ███╗██╗
 ██╔════╝  █████╗ ██║  ██║╚══██╔══╝████╗ ████║██║
@@ -33,31 +39,67 @@ GoHTML使用帮助:
   命令 [参数] <模板文件夹路径>
 
 参数：
-  -dl <字符串>       左分隔符样式
-  -dr <字符串>       右分隔符样式
+  -dl <字符串>     | 默认：{{     | 左分隔符样式
+  -dr <字符串>     | 默认：}}     | 右分隔符样式
+  -suffix <字符串> | 默认：gohtml | GoHTML模板文件后缀
 
 举例：
-  gohtml -dl <{ -dr }> /home/bluek404/gocode/web/_view
+  gohtml -dl <{ -dr }> -suffix temp /home/bluek404/gocode/web/view
    |则会将
-   |/home/bluek404/gocode/web/_view
-   |里面所有gohtml文件转换为go文件后放到
    |/home/bluek404/gocode/web/view
-   |文件夹中
+   |里面所有temp为后缀的文件转换为go文件后放到同一文件夹内
    |并设置左分隔符为“<{” ，右分割符为“}>”
 
 备注：
-  方括号[]为选填项目，尖括号<>为必填项目
-  未转换的模板文件夹必须以“_”开头，并且文件以“.gohtml”结尾（都没有双引号）`)
+  方括号[]为选填项目，尖括号<>为必填项目`)
 		return
 	}
-	fmt.Println(flag.Args()[0])
-	src := ``
-	buf, err := format.Source([]byte(generate(src)))
+	// 获取文件夹位置参数
+	folder := flag.Arg(0)
+	info, err := os.Lstat(folder)
 	if err != nil {
-		log.Println("Format error:", err)
+		log.Println(err)
 		return
 	}
-	fmt.Println(string(buf))
+	if !info.IsDir() {
+		log.Println("所输入路径不是文件夹")
+		return
+	}
+
+	err = filepath.Walk(folder, walk)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	fmt.Println("-==处理完成==-")
+}
+
+func walk(path string, info os.FileInfo, err error) error {
+	if info == nil {
+		return err
+	}
+	if info.IsDir() {
+		return nil
+	}
+	goHTML := regexp.MustCompile("." + suffix + "$")
+	// 检查是否为gohtml文件
+	if !goHTML.MatchString(info.Name()) {
+		return nil
+	}
+	buf, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	buf, err = format.Source([]byte(generate(string(buf))))
+	if err != nil {
+		return errors.New(fmt.Sprintf("Format error:", path, err))
+	}
+	// 将文件后缀变为.go
+	outPath := path[:len(path)-len(suffix)] + "go"
+	// 输出文件
+	ioutil.WriteFile(outPath, buf, 0)
+	fmt.Println(path, "==>", outPath)
+	return nil
 }
 
 func generate(in string) string {
