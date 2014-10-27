@@ -151,7 +151,7 @@ GoHTML使用帮助:
 源码规范
 --------
 
-作为`http.HandleFunc`的函数，必须返回值只有一个`String`（因为多了就不符合`http.HandleFunc`的要求了）
+作为`http.HandleFunc`的函数，必须返回值只有一个`string`（因为多了就不符合`http.HandleFunc`的要求了）
 
 然后里面必须创建一个类型为`*bytes.Buffer`的变量，变量名称需要和设置的一样（默认是`_buffer`）。这个缓冲器是用于存放要输出的HTML代码的
 
