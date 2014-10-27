@@ -131,16 +131,18 @@ GoHTML使用帮助:
   命令 [参数] <模板文件夹路径>
 
 参数：
-  -dl <字符串>     | 默认：{{     | 左分隔符样式
-  -dr <字符串>     | 默认：}}     | 右分隔符样式
-  -suffix <字符串> | 默认：gohtml | GoHTML模板文件后缀
+  -dl <字符串>     | 默认：{{      | 左分隔符样式
+  -dr <字符串>     | 默认：}}      | 右分隔符样式
+  -suffix <字符串> | 默认：gohtml  | GoHTML模板文件后缀
+  -buffer <字符串> | 默认：_buffer | 缓冲器变量名称
 
 举例：
-  gohtml -dl <{ -dr }> -suffix temp /home/bluek404/gocode/web/view
-   |则会将
-   |/home/bluek404/gocode/web/view
-   |里面所有temp为后缀的文件转换为go文件后放到同一文件夹内
-   |并设置左分隔符为“<{” ，右分割符为“}>”
+  $ gohtml -dl <{ -dr }> -suffix temp -buffer buf /home/bluek404/gocode/web/view
+   | 则会将
+   | /home/bluek404/gocode/web/view
+   | 里面所有temp为后缀的文件转换为go文件后放到同一文件夹内
+   | 将缓冲器变量名称设为“buf”
+   | 并设置左分隔符为“<{” ，右分割符为“}>”
 
 备注：
   方括号[]为选填项目，尖括号<>为必填项目

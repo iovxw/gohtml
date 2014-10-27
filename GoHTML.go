@@ -16,7 +16,8 @@ import (
 var (
 	delimiterLeft  = *flag.String("dl", "{{", "Left delimiter")
 	delimiterRight = *flag.String("dr", "}}", "Right delimiter")
-	suffix         = *flag.String("suffix", "gohtml", "The GoHTML templates file suffix")
+	suffix         = *flag.String("suffix", "gohtml", "Suffix of the GoHTML template files")
+	buffer         = *flag.String("buffer", "_buffer", "Buffer name")
 )
 
 func main() {
@@ -38,16 +39,18 @@ GoHTML使用帮助:
   命令 [参数] <模板文件夹路径>
 
 参数：
-  -dl <字符串>     | 默认：{{     | 左分隔符样式
-  -dr <字符串>     | 默认：}}     | 右分隔符样式
-  -suffix <字符串> | 默认：gohtml | GoHTML模板文件后缀
+  -dl <字符串>     | 默认：{{      | 左分隔符样式
+  -dr <字符串>     | 默认：}}      | 右分隔符样式
+  -suffix <字符串> | 默认：gohtml  | GoHTML模板文件后缀
+  -buffer <字符串> | 默认：_buffer | 缓冲器变量名称
 
 举例：
-  gohtml -dl <{ -dr }> -suffix temp /home/bluek404/gocode/web/view
-   |则会将
-   |/home/bluek404/gocode/web/view
-   |里面所有temp为后缀的文件转换为go文件后放到同一文件夹内
-   |并设置左分隔符为“<{” ，右分割符为“}>”
+  $ gohtml -dl <{ -dr }> -suffix temp -buffer buf /home/bluek404/gocode/web/view
+   | 则会将
+   | /home/bluek404/gocode/web/view
+   | 里面所有temp为后缀的文件转换为go文件后放到同一文件夹内
+   | 将缓冲器变量名称设为“buf”
+   | 并设置左分隔符为“<{” ，右分割符为“}>”
 
 备注：
   方括号[]为选填项目，尖括号<>为必填项目`)
@@ -55,16 +58,18 @@ GoHTML使用帮助:
 	}
 	// 获取文件夹位置参数
 	folder := flag.Arg(0)
+	// 获取文件夹信息
 	info, err := os.Lstat(folder)
 	if err != nil {
 		log.Println(err)
 		return
 	}
+	// 检查所输入参数是否为文件夹
 	if !info.IsDir() {
 		log.Println("所输入路径不是文件夹")
 		return
 	}
-
+	// 处理文件夹内的模板文件
 	err = filepath.Walk(folder, walk)
 	if err != nil {
 		log.Println(err)
@@ -73,6 +78,7 @@ GoHTML使用帮助:
 	fmt.Println("-==处理完成==-")
 }
 
+// 文件处理
 func walk(path string, info os.FileInfo, err error) error {
 	if info == nil {
 		return err
@@ -89,6 +95,7 @@ func walk(path string, info os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
+	// 格式化转换后的文件
 	buf, err = format.Source([]byte(generate(string(buf))))
 	if err != nil {
 		return fmt.Errorf("Format error: %v %v", path, err)
@@ -101,6 +108,7 @@ func walk(path string, info os.FileInfo, err error) error {
 	return nil
 }
 
+// 转换模板文件
 func generate(in string) string {
 	var _buffer bytes.Buffer
 
@@ -136,7 +144,7 @@ func generate(in string) string {
 					// 去掉两边分隔符
 					vBUF := v[delimiterLeftLen : len(v)-delimiterRightLen]
 					// 组合插入
-					vBUF = "\")\n_buffer.WriteString(" + vBUF + ")\n_buffer.WriteString(\""
+					vBUF = "\")\n" + buffer + ".WriteString(" + vBUF + ")\n" + buffer + ".WriteString(\""
 					// 替换
 					buf = strings.Replace(buf, v, vBUF, -1)
 				}
@@ -153,7 +161,7 @@ func generate(in string) string {
 			// 检查是否有html需要输出
 			if htmlBUF != "" {
 				// 输出html
-				_buffer.WriteString("_buffer.WriteString(\"" + htmlBUF + "\")\n")
+				_buffer.WriteString(buffer + ".WriteString(\"" + htmlBUF + "\")\n")
 				// 清空缓存
 				htmlBUF = ""
 			}
