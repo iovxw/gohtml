@@ -103,7 +103,7 @@ func walk(path string, info os.FileInfo, err error) error {
 	// 将文件后缀变为.go
 	outPath := path[:len(path)-len(suffix)] + "go"
 	// 输出文件
-	ioutil.WriteFile(outPath, buf, 0)
+	ioutil.WriteFile(outPath, buf, 0700)
 	fmt.Println(path, "==>", outPath)
 	return nil
 }
