@@ -14,10 +14,10 @@ import (
 )
 
 var (
-	delimiterLeft  = *flag.String("dl", "{{", "Left delimiter")
-	delimiterRight = *flag.String("dr", "}}", "Right delimiter")
-	suffix         = *flag.String("suffix", "gohtml", "Suffix of the GoHTML template files")
-	buffer         = *flag.String("buffer", "_buffer", "Buffer name")
+	delimiterLeft  = flag.String("dl", "{{", "Left delimiter")
+	delimiterRight = flag.String("dr", "}}", "Right delimiter")
+	suffix         = flag.String("suffix", "gohtml", "Suffix of the GoHTML template files")
+	buffer         = flag.String("buffer", "_buffer", "Buffer name")
 )
 
 func main() {
@@ -86,7 +86,7 @@ func walk(path string, info os.FileInfo, err error) error {
 	if info.IsDir() {
 		return nil
 	}
-	goHTML := regexp.MustCompile("." + suffix + "$")
+	goHTML := regexp.MustCompile("." + *suffix + "$")
 	// 检查是否为gohtml文件
 	if !goHTML.MatchString(info.Name()) {
 		return nil
@@ -101,7 +101,7 @@ func walk(path string, info os.FileInfo, err error) error {
 		return fmt.Errorf("Format error: %v %v", path, err)
 	}
 	// 将文件后缀变为.go
-	outPath := path[:len(path)-len(suffix)] + "go"
+	outPath := path[:len(path)-len(*suffix)] + "go"
 	// 输出文件
 	ioutil.WriteFile(outPath, buf, 0700)
 	fmt.Println(path, "==>", outPath)
@@ -113,10 +113,10 @@ func generate(in string) string {
 	var _buffer bytes.Buffer
 
 	isHTML := regexp.MustCompile(`^\s*<.*>\s*$`)
-	delimiterLeftLen := len(delimiterLeft)
-	delimiterRightLen := len(delimiterRight)
+	delimiterLeftLen := len(*delimiterLeft)
+	delimiterRightLen := len(*delimiterRight)
 	// 分隔符
-	delimiter := regexp.MustCompile(delimiterLeft + ".*" + delimiterRight)
+	delimiter := regexp.MustCompile(*delimiterLeft + ".*" + *delimiterRight)
 
 	a := regexp.MustCompile(`^\s*`)
 	z := regexp.MustCompile(`\s*$`)
@@ -144,7 +144,7 @@ func generate(in string) string {
 					// 去掉两边分隔符
 					vBUF := v[delimiterLeftLen : len(v)-delimiterRightLen]
 					// 组合插入
-					vBUF = "\")\n" + buffer + ".WriteString(" + vBUF + ")\n" + buffer + ".WriteString(\""
+					vBUF = "\")\n" + *buffer + ".WriteString(" + vBUF + ")\n" + *buffer + ".WriteString(\""
 					// 替换
 					buf = strings.Replace(buf, v, vBUF, -1)
 				}
@@ -161,7 +161,7 @@ func generate(in string) string {
 			// 检查是否有html需要输出
 			if htmlBUF != "" {
 				// 输出html
-				_buffer.WriteString(buffer + ".WriteString(\"" + htmlBUF + "\")\n")
+				_buffer.WriteString(*buffer + ".WriteString(\"" + htmlBUF + "\")\n")
 				// 清空缓存
 				htmlBUF = ""
 			}
