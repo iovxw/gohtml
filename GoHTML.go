@@ -113,8 +113,6 @@ func generate(in string) string {
 	var _buffer bytes.Buffer
 
 	isHTML := regexp.MustCompile(`^\s*<.*>\s*$`)
-	delimiterLeftLen := len(*delimiterLeft)
-	delimiterRightLen := len(*delimiterRight)
 	// 分隔符
 	delimiter := regexp.MustCompile(*delimiterLeft + ".*" + *delimiterRight)
 
@@ -138,16 +136,8 @@ func generate(in string) string {
 			// 检查是否有分隔符需要替换
 			if delimiter.MatchString(buf) {
 				// 替换分隔符
-				// 找到本行全部分隔符
-				delimiterBUF := delimiter.FindAllString(buf, -1)
-				for _, v := range delimiterBUF {
-					// 去掉两边分隔符
-					vBUF := v[delimiterLeftLen : len(v)-delimiterRightLen]
-					// 组合插入
-					vBUF = "\")\n" + *buffer + ".WriteString(" + vBUF + ")\n" + *buffer + ".WriteString(\""
-					// 替换
-					buf = strings.Replace(buf, v, vBUF, -1)
-				}
+				buf = strings.Replace(buf, *delimiterLeft, "\")\n"+*buffer+".WriteString(", -1)
+				buf = strings.Replace(buf, *delimiterRight, ")\n"+*buffer+".WriteString(\"", -1)
 			}
 			// 将本行添加到缓存中，输出为一行
 			// 就是将两行
