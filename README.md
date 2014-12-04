@@ -23,7 +23,7 @@ Golang HTML模板，非正式项目
 
 **转换前：**
 
-```
+```go
 package tpl
 
 import (
@@ -65,7 +65,7 @@ func test2(_buffer *bytes.Buffer, t string) {
 
 **转换后：**
 
-```
+```go
 package tpl
 
 import (
@@ -159,7 +159,7 @@ GoHTML使用帮助:
 
 负责处理部分html的函数，推荐写成上面例子里的样式（接收一个缓冲器变量），就像：
 
-```
+```go
 func test1(_buffer *bytes.Buffer) {
     <a>test1</a>
 }
@@ -167,7 +167,7 @@ func test1(_buffer *bytes.Buffer) {
 
 因为会转换成：
 
-```
+```go
 func test1(_buffer *bytes.Buffer) {
     _buffer.WriteString("<a>test1</a>")
 }
@@ -189,7 +189,7 @@ func test1(_buffer *bytes.Buffer) {
 
 写在别的地方是不会转换的，比如：
 
-```
+```go
 <a>
 if i==0 {
     {{t1}}
@@ -201,7 +201,7 @@ if i==0 {
 
 必须写成
 
-```
+```go
 if i==0 {
     <a>{{t1}}</a>
 }else{
