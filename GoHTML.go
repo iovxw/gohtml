@@ -95,13 +95,18 @@ func walk(path string, info os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
+	gen := []byte(generate(string(buf)))
 	// 格式化转换后的文件
-	buf, err = format.Source([]byte(generate(string(buf))))
-	if err != nil {
-		return fmt.Errorf("Format error: %v %v", path, err)
-	}
+	buf, err = format.Source(gen)
+
 	// 将文件后缀变为.go
 	outPath := path[:len(path)-len(*suffix)] + "go"
+
+	if err != nil {
+		// 输出未格式化的错误文件
+		ioutil.WriteFile(outPath, gen, 0700)
+		return fmt.Errorf("Format error: %v %v", outPath, err)
+	}
 	// 输出文件
 	ioutil.WriteFile(outPath, buf, 0700)
 	fmt.Println(path, "==>", outPath)
@@ -114,7 +119,7 @@ func generate(in string) string {
 
 	isHTML := regexp.MustCompile(`^\s*<.*>\s*$`)
 	// 分隔符
-	delimiter := regexp.MustCompile(*delimiterLeft + ".*" + *delimiterRight)
+	delimiter := regexp.MustCompile(*delimiterLeft + "[^" + *delimiterLeft + *delimiterRight + "]+" + *delimiterRight)
 
 	a := regexp.MustCompile(`^\s*`)
 	z := regexp.MustCompile(`\s*$`)
@@ -133,12 +138,21 @@ func generate(in string) string {
 			buf = z.ReplaceAllLiteralString(buf, "")
 			// 转义双引号
 			buf = strings.Replace(buf, `"`, `\"`, -1)
+
 			// 检查是否有分隔符需要替换
 			if delimiter.MatchString(buf) {
 				// 替换分隔符
-				buf = strings.Replace(buf, *delimiterLeft, "\")\n"+*buffer+".WriteString(", -1)
-				buf = strings.Replace(buf, *delimiterRight, ")\n"+*buffer+".WriteString(\"", -1)
+				all := delimiter.FindAllString(buf, -1)
+				for _, v := range all {
+					// 去掉两边分隔符
+					vBuf := v[len(*delimiterLeft) : len(v)-len(*delimiterRight)]
+					// 组合插入
+					vBuf = "\")\n" + *buffer + ".WriteString(" + vBuf + ")\n" + *buffer + ".WriteString(\""
+					// 替换
+					buf = strings.Replace(buf, v, vBuf, -1)
+				}
 			}
+
 			// 将本行添加到缓存中，输出为一行
 			// 就是将两行
 			// _buffer.WriteString('<a>xxx</a>')
