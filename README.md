@@ -225,4 +225,8 @@ if i==0 {
 下载
 ----
 
-[![Gobuild Download](http://gobuild.io/badge/github.com/Bluek404/GoHTML/downloads.svg)](http://gobuild.io/github.com/Bluek404/GoHTML)
+`go get github.com/Bluek404/gohtml`
+
+OR
+
+[![Gobuild Download](http://gobuild.io/badge/github.com/Bluek404/gohtml/downloads.svg)](http://gobuild.io/github.com/Bluek404/gohtml)
