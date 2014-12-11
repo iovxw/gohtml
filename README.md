@@ -107,7 +107,7 @@ func test2(_buffer *bytes.Buffer, t string) {
 }
 ```
 
-然后就可以直接调用里面的函数作为`http.HandleFunc`
+转换后的函数调用请参照`example`
 
 使用帮助
 --------
