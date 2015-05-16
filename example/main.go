@@ -1,7 +1,8 @@
+//go:generate gohtml tpl
+
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Bluek404/gohtml/example/tpl"
@@ -13,5 +14,5 @@ func main() {
 }
 
 func hello(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, tpl.Index(r.URL.Path[1:]))
+	w.Write(tpl.Index(r.URL.Path[1:]))
 }

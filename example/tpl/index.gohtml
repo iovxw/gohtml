@@ -4,14 +4,23 @@ import (
 	"bytes"
 )
 
-func Index(name string) string {
+func head(_buffer *bytes.Buffer) {
+	<head>
+		<title>Hello from GoHTML</title>
+	</head>
+}
+
+func Index(name string) []byte {
 	_buffer := new(bytes.Buffer)
 
-	if name == "" {
-		<a>Hello World!</a>
-	}else{
-		<a>Hello {{name}}</a>
-	}
+	<html>
+		head(_buffer)
+		if name == "" {
+			<a>Hello World!</a>
+		}else{
+			<a>Hello {{name}}</a>
+		}
+	<html>
 
-	return _buffer.String()
+	return _buffer.Bytes()
 }

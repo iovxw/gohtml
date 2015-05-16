@@ -13,6 +13,8 @@ import (
 	"strings"
 )
 
+const filePerm os.FileMode = 0644 // -rw-r--r--
+
 var (
 	delimiterLeft  = flag.String("dl", "{{", "Left delimiter")
 	delimiterRight = flag.String("dr", "}}", "Right delimiter")
@@ -86,9 +88,10 @@ func walk(path string, info os.FileInfo, err error) error {
 	if info.IsDir() {
 		return nil
 	}
-	goHTML := regexp.MustCompile("." + *suffix + "$")
+
+	s := "." + *suffix
 	// 检查是否为gohtml文件
-	if !goHTML.MatchString(info.Name()) {
+	if info.Name()[len(info.Name())-len(s):] != s {
 		return nil
 	}
 	buf, err := ioutil.ReadFile(path)
@@ -104,11 +107,11 @@ func walk(path string, info os.FileInfo, err error) error {
 
 	if err != nil {
 		// 输出未格式化的错误文件
-		ioutil.WriteFile(outPath, gen, 0700)
+		ioutil.WriteFile(outPath, gen, filePerm)
 		return fmt.Errorf("Format error: %v %v", outPath, err)
 	}
 	// 输出文件
-	ioutil.WriteFile(outPath, buf, 0700)
+	ioutil.WriteFile(outPath, buf, filePerm)
 	fmt.Println(path, "==>", outPath)
 	return nil
 }
