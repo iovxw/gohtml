@@ -91,6 +91,9 @@ func walk(path string, info os.FileInfo, err error) error {
 
 	s := "." + *suffix
 	// 检查是否为gohtml文件
+	if len(info.Name()) < len(s) {
+		return nil
+	}
 	if info.Name()[len(info.Name())-len(s):] != s {
 		return nil
 	}
